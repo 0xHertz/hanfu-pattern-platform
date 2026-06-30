@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head><meta charset="UTF-8"><title>纯HTML测试</title>
+<style>
+  body { font-family: sans-serif; padding: 40px; max-width: 400px; margin: 0 auto; }
+  button { padding: 12px 24px; font-size: 16px; cursor: pointer; border-radius: 6px; border: none; background: #8B0000; color: white; }
+  input[type=range] { width: 100%; margin: 20px 0; }
+  .val { font-size: 24px; font-weight: bold; }
+</style></head>
+<body>
+  <h1>纯HTML测试</h1>
+  <p>计数器: <span id="count" class="val">0</span></p>
+  <button onclick="document.getElementById('count').textContent = parseInt(document.getElementById('count').textContent) + 1">点击 +1</button>
+  <p>滑块值: <span id="sv" class="val">50</span></p>
+  <input type="range" min="0" max="100" value="50"
+    oninput="document.getElementById('sv').textContent = this.value">
+</body>
+</html>
