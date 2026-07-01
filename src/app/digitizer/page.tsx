@@ -584,11 +584,15 @@ export default function DigitizerPage() {
       setPieces((prev) => {
         const updated = [...prev]
         const piece = { ...updated[activePieceIdx] }
+        const existing = piece.annotations || []
+        const filtered = existing.filter(
+          (a) => !(
+            (a.fromPointId === fromPointId && a.toPointId === toPointId) ||
+            (a.fromPointId === toPointId && a.toPointId === fromPointId)
+          )
+        )
         piece.annotations = [
-          ...(piece.annotations || []).filter(
-            (a) => a.fromPointId !== fromPointId && a.fromPointId !== toPointId
-                  && a.toPointId !== fromPointId && a.toPointId !== toPointId
-          ),
+          ...filtered,
           {
             id: `ann_${Math.random().toString(36).slice(2, 8)}`,
             fromPointId,
