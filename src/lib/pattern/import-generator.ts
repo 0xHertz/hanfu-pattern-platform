@@ -310,12 +310,14 @@ export function generateImportSvg(
       const dx = bx - ax, dy = by - ay
       const len = Math.hypot(dx, dy)
       if (len < 0.1) continue
-      // Extract annotation name by stripping digits/suffix
       const nameMatch = ann.label.match(/^(.+?)\s*\d+/)
       const annName = nameMatch ? nameMatch[1].trim() : ann.label.trim()
+      const a = ann.from, b = ann.to
+      const edgeKey = `${part.name}:${a < b ? a : b}-${a < b ? b : a}`
       let labelText: string
-      // Check if a derived formula exists for this annotation
-      const formula = annotationFormulas?.find((f) => f.name === annName)
+      const formula = annotationFormulas?.find(
+        (f) => f.name === annName || f.name === edgeKey || f.name === ann.label
+      )
       if (formula) {
         const computedValue = evaluateFormula(formula.formula, measurements)
         labelText = `${annName} ${Math.round(computedValue)}mm`

@@ -91,13 +91,18 @@ export function deriveAnnotationFormulas(imports: SizeImport[]): AnnotationFormu
     const seen = new Set<string>()
     for (const part of imp.data.parts) {
       for (const ann of part.annotations || []) {
+        const a = ann.from, b = ann.to
+        const edgeKey = `${part.name}:${a < b ? a : b}-${a < b ? b : a}`
+        if (seen.has(edgeKey)) continue
+        seen.add(edgeKey)
+
         const parsed = parseAnnotationLabel(ann.label)
-        if (!parsed) continue
-        const key = parsed.name
-        if (seen.has(key)) continue // skip duplicates within same import
-        seen.add(key)
-        if (!groups.has(key)) groups.set(key, [])
-        groups.get(key)!.push({ sizeLabel: imp.sizeLabel, value: parsed.value })
+        const name = parsed ? parsed.name : edgeKey
+        const value = parsed ? parsed.value : parseFloat(ann.label)
+        if (isNaN(value)) continue
+
+        if (!groups.has(name)) groups.set(name, [])
+        groups.get(name)!.push({ sizeLabel: imp.sizeLabel, value })
       }
     }
   }
