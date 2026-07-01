@@ -16,7 +16,7 @@ import {
   X,
   AlertCircle,
 } from "lucide-react"
-import { collectSizeImports, deriveFormulas } from "@/lib/pattern/formula-deriver"
+import { collectSizeImports, deriveFormulas, deriveAnnotationFormulas } from "@/lib/pattern/formula-deriver"
 import { saveFormulas, deleteOverride, hasFormulasSync, getOverridesSync } from "@/lib/storage"
 import { AdminGuard } from "@/components/admin-guard"
 
@@ -47,8 +47,13 @@ function FormulaModal({ garmentId, name, onClose, onSaved }: { garmentId: string
     if (overrides.length < 2) return
     try {
       const imports = collectSizeImports(garmentId)
-      const formulas = deriveFormulas(imports)
-      await saveFormulas(garmentId, formulas)
+      const importData = deriveFormulas(imports)
+      const annotationFormulas = deriveAnnotationFormulas(imports)
+      await saveFormulas(garmentId, {
+        importData,
+        annotationFormulas,
+        derivedFrom: imports.map(i => i.sizeLabel),
+      })
       setSaved(true)
       setTimeout(() => { onSaved(); onClose() }, 1000)
     } catch (e) {
@@ -71,9 +76,9 @@ function FormulaModal({ garmentId, name, onClose, onSaved }: { garmentId: string
           <div className="flex flex-wrap gap-1.5">
             {overrides.map(o => <Badge key={o.sizeLabel} variant="secondary" className="text-xs">{o.sizeLabel}</Badge>)}
           </div>
-          <p className="text-xs text-muted-foreground">
-            系统将比对各尺码间同一顶点的坐标差异，通过线性回归找到与身高、胸围等测量值的最佳拟合公式。
-          </p>
+           <p className="text-xs text-muted-foreground">
+             系统将比对各尺码间的顶点坐标和标注尺寸差异，通过线性回归找到与身高、胸围等测量值的最佳拟合公式。
+           </p>
         </div>
         <div className="flex justify-end gap-3 border-t px-6 py-4">
           <Button variant="outline" size="sm" onClick={onClose}>取消</Button>

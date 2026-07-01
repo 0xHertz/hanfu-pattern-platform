@@ -55,6 +55,96 @@ function formatFormula(measurement: string, slope: number, intercept: number): s
   return expr
 }
 
+// ── Annotation Formula Derivation ─────────────────────────────────
+
+export interface AnnotationFormula {
+  /** Display name, e.g. "衣长" */
+  name: string
+  /** Body measurement key, e.g. "garmentLength" */
+  measurement: string
+  /** Formula string, e.g. "{height}*0.37" or "{garmentLength}-20" */
+  formula: string
+}
+
+/**
+ * Parse annotation label like "衣长 580" → { name: "衣长", value: 580 }.
+ * Supports optional mm/px/cm suffix.
+ */
+function parseAnnotationLabel(label: string): { name: string; value: number } | null {
+  const match = label.trim().match(/^(.+?)\s*(\d+(?:\.\d+)?)\s*(?:mm|px|cm)?$/i)
+  if (!match) return null
+  return { name: match[1].trim(), value: parseFloat(match[2]) }
+}
+
+/**
+ * For each named annotation, collect (measurement, value) pairs across sizes.
+ * Finds which body measurement best predicts the annotation value via linear regression.
+ *
+ * @param imports - Size imports from collectSizeImports().
+ * @returns Best-fit formulas for annotations that appear in ≥2 sizes with R² > 0.3.
+ */
+export function deriveAnnotationFormulas(imports: SizeImport[]): AnnotationFormula[] {
+  // Group annotation values by label name across imports
+  const groups = new Map<string, { sizeLabel: string; value: number }[]>()
+
+  for (const imp of imports) {
+    const seen = new Set<string>()
+    for (const part of imp.data.parts) {
+      for (const ann of part.annotations || []) {
+        const parsed = parseAnnotationLabel(ann.label)
+        if (!parsed) continue
+        const key = parsed.name
+        if (seen.has(key)) continue // skip duplicates within same import
+        seen.add(key)
+        if (!groups.has(key)) groups.set(key, [])
+        groups.get(key)!.push({ sizeLabel: imp.sizeLabel, value: parsed.value })
+      }
+    }
+  }
+
+  const formulas: AnnotationFormula[] = []
+
+  for (const [name, data] of groups) {
+    if (data.length < 2) continue // need at least 2 sizes
+
+    let bestMeas = ""
+    let bestR2 = 0
+    let bestSlope = 0
+    let bestIntercept = 0
+
+    for (const meas of DERIVATION_CANDIDATES) {
+      const points: [number, number][] = []
+      for (const d of data) {
+        const measVal = getSizeMeasurementsMm(d.sizeLabel)[meas]
+        if (measVal === undefined) continue
+        points.push([measVal, d.value])
+      }
+      if (points.length < 2) continue
+
+      const result = linearRegression(points)
+      if (result.r2 > bestR2) {
+        bestR2 = result.r2
+        bestMeas = meas
+        bestSlope = result.slope
+        bestIntercept = result.intercept
+      }
+    }
+
+    if (bestMeas && bestR2 > 0.3) {
+      const formula = formatFormula(bestMeas, bestSlope, bestIntercept)
+      formulas.push({ name, measurement: bestMeas, formula })
+    }
+  }
+
+  return formulas
+}
+
+export interface FormulaPackage {
+  importData: ImportData
+  annotationFormulas: AnnotationFormula[]
+  derivedFrom: string[]
+}
+
 // ── Derivation ─────────────────────────────────────────────────────
 
 interface SizeImport {
@@ -62,7 +152,7 @@ interface SizeImport {
   data: ImportData
 }
 
-function getSizeMeasurementsMm(sizeLabel: string): Record<string, number> {
+export function getSizeMeasurementsMm(sizeLabel: string): Record<string, number> {
   const cm = SIZE_DATA[sizeLabel]
   if (!cm) return {}
   const result: Record<string, number> = {}
