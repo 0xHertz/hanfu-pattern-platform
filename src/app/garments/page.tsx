@@ -9,13 +9,14 @@ import { GARMENT_CATALOG, DYNASTY_LABELS, GARMENT_CATEGORIES } from "@/data/garm
 import type { Dynasty, GarmentCategory } from "@/types/garment"
 import {
   CheckCircle2,
-  Database,
   RotateCcw,
   Shirt,
   Calculator,
   FlaskConical,
   X,
+  AlertCircle,
 } from "lucide-react"
+import { collectSizeImports, deriveFormulas } from "@/lib/pattern/formula-deriver"
 
 interface PartInfo { name: string; pointCount: number }
 interface ImportData { garmentId: string; name: string; measurements: string[]; parts: PartInfo[]; sizeLabel?: string }
@@ -64,16 +65,16 @@ function FormulaModal({ garmentId, name, onClose, onSaved }: { garmentId: string
   const [saved, setSaved] = useState(false)
 
   const handleSave = () => {
-    // Derive simple linear formulas from the override data
     if (overrides.length < 2) return
-    // Store formulas key
-    localStorage.setItem(`hanfu-formulas-${garmentId}`, JSON.stringify({
-      garmentId,
-      derivedFrom: overrides.map(o => o.sizeLabel),
-      parts: [] // simplified - full derivation is in formula-deriver.ts
-    }))
-    setSaved(true)
-    setTimeout(() => { onSaved(); onClose() }, 1000)
+    try {
+      const imports = collectSizeImports(garmentId)
+      const formulas = deriveFormulas(imports)
+      localStorage.setItem(`hanfu-formulas-${garmentId}`, JSON.stringify(formulas))
+      setSaved(true)
+      setTimeout(() => { onSaved(); onClose() }, 1000)
+    } catch (e) {
+      alert("公式推导失败: " + (e instanceof Error ? e.message : String(e)))
+    }
   }
 
   return (
@@ -91,11 +92,15 @@ function FormulaModal({ garmentId, name, onClose, onSaved }: { garmentId: string
           <div className="flex flex-wrap gap-1.5">
             {overrides.map(o => <Badge key={o.sizeLabel} variant="secondary" className="text-xs">{o.sizeLabel}</Badge>)}
           </div>
-          <p className="text-xs text-muted-foreground">系统将比对各尺码间同一顶点的坐标差异，通过线性回归找到与身高、胸围等测量值的最佳拟合公式。</p>
+          <p className="text-xs text-muted-foreground">
+            系统将比对各尺码间同一顶点的坐标差异，通过线性回归找到与身高、胸围等测量值的最佳拟合公式。
+          </p>
         </div>
         <div className="flex justify-end gap-3 border-t px-6 py-4">
           <Button variant="outline" size="sm" onClick={onClose}>取消</Button>
-          <Button size="sm" disabled={saved} onClick={handleSave}>{saved ? "已保存" : "保存公式"}</Button>
+          <Button size="sm" disabled={overrides.length < 2 || saved} onClick={handleSave}>
+            {saved ? "已保存" : overrides.length < 2 ? "至少需要2套数据" : "保存公式"}
+          </Button>
         </div>
       </div>
     </div>
