@@ -861,7 +861,7 @@ export default function DigitizerPage() {
         }),
       })),
     }
-  }, [pieces])
+  }, [pieces, selectedSize])
 
   const handleExportJSON = useCallback(() => {
     const data = buildExportData()
