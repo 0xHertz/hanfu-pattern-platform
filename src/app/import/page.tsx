@@ -129,7 +129,7 @@ function ImportPageInner() {
     if (!parsed || !garmentId) return
     const sizeLabel = parsed.sizeLabel || "default"
     localStorage.setItem(`hanfu-override-${garmentId}-${sizeLabel}`, jsonText)
-    router.push(`/measure/${garmentId}`)
+    router.push(`/garments`)
   }
 
   return (

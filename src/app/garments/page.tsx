@@ -226,6 +226,12 @@ export default function GarmentsPage() {
                     </Button>
                   )}
 
+                  {overrides.length === 1 && (
+                    <Link href={`/import?overwrite=${g.id}`} className="inline-flex items-center justify-center rounded-lg border border-border bg-background px-2.5 text-xs font-medium h-7 hover:bg-muted">
+                      导入更多
+                    </Link>
+                  )}
+
                   {overrides.length >= 1 ? (
                     <Button variant="destructive" size="xs" className="gap-1 ml-auto" onClick={() => handleReset(g.id)}>
                       <RotateCcw className="size-3" />还原
