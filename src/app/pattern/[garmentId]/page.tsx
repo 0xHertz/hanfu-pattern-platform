@@ -282,6 +282,7 @@ export default function PatternPage({
               </div>
             </CardContent>
           </Card>
+        </div>
 
     </div>
   )
