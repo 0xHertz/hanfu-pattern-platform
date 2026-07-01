@@ -302,7 +302,14 @@ export function generateImportSvg(
       const len = Math.hypot(dx, dy)
       if (len < 0.1) continue
       const labelName = ann.label.replace(/\d+/g, '').replace(/[pxmm]/gi, '').trim() || ann.label
-      const matchingMeas = measurements[ann.label]     // if label IS a measurement key
+      const measKeyMap: Record<string, string> = {
+        '身高': 'height', '胸围': 'bust', '腰围': 'waist', '臀围': 'hip',
+        '肩宽': 'shoulderWidth', '颈围': 'neckCircumference',
+        '通臂长': 'armSpan', '臂长': 'armLength',
+        '衣长': 'garmentLength', '裙长': 'skirtLength',
+      }
+      const mappedKey = measKeyMap[ann.label] || ann.label
+      const matchingMeas = measurements[mappedKey]
       const labelText = matchingMeas !== undefined
         ? `${ann.label} ${Math.round(matchingMeas)}mm`
         : `${labelName} ${Math.round(len)}mm`
