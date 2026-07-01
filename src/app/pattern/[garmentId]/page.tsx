@@ -48,6 +48,7 @@ export default function PatternPage({
   const [generationError, setGenerationError] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [importData, setImportData] = useState<ImportData | null>(null)
+  const [annotationFormulas, setAnnotationFormulas] = useState<any[]>([])
 
   useEffect(() => {
     const stored = localStorage.getItem(`hanfu-measurements-${garmentId}`)
@@ -66,7 +67,16 @@ export default function PatternPage({
     } else {
       const formulasJson = localStorage.getItem(`hanfu-formulas-${garmentId}`)
       if (formulasJson) {
-        try { setImportData(JSON.parse(formulasJson)) } catch {}
+        try {
+          const parsed = JSON.parse(formulasJson)
+          if (parsed.importData && parsed.annotationFormulas) {
+            setImportData(parsed.importData)
+            setAnnotationFormulas(parsed.annotationFormulas)
+            localStorage.setItem(`hanfu-annotformulas-${garmentId}`, JSON.stringify(parsed.annotationFormulas))
+          } else {
+            setImportData(parsed)
+          }
+        } catch {}
         setLoaded(true)
       } else {
         getOverrides(garmentId).then((overrides) => {
@@ -98,7 +108,7 @@ export default function PatternPage({
         return
       }
       try {
-        const result = generateImportSvg(importData, measurements)
+        const result = generateImportSvg(importData, measurements, annotationFormulas)
         setSvgString(result.svg)
       } catch (err) {
         console.error('Import pattern generation failed:', err)
@@ -108,7 +118,7 @@ export default function PatternPage({
     } else {
       if (importData) {
         try {
-          const result = generateImportSvg(importData, measurements)
+          const result = generateImportSvg(importData, measurements, annotationFormulas)
           setSvgString(result.svg)
         } catch (err) {
           console.error('Override pattern generation failed:', err)
@@ -254,7 +264,7 @@ export default function PatternPage({
               setGenerationError(null)
               if (importData) {
                 try {
-                  const result = generateImportSvg(importData, measurements)
+                  const result = generateImportSvg(importData, measurements, annotationFormulas)
                   setSvgString(result.svg)
                 } catch (err) {
                   setGenerationError(err instanceof Error ? err.message : String(err))

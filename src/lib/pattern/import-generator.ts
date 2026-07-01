@@ -183,6 +183,14 @@ function computeBBox(pts: ComputedPoint[]): BBox {
   }
 }
 
+// ─── Annotation formula type ─────────────────────────────────────────────────
+
+export interface AnnotFormula {
+  name: string
+  measurement: string
+  formula: string
+}
+
 // ─── Main export ────────────────────────────────────────────────────────────
 
 export interface ImportPatternResult {
@@ -202,6 +210,7 @@ export interface ImportPatternResult {
 export function generateImportSvg(
   data: ImportData,
   measurements: Record<string, number>,
+  annotationFormulas?: AnnotFormula[],
 ): ImportPatternResult {
   if (!data.parts || data.parts.length === 0) {
     throw new Error("导入数据不包含任何裁片")
@@ -301,18 +310,28 @@ export function generateImportSvg(
       const dx = bx - ax, dy = by - ay
       const len = Math.hypot(dx, dy)
       if (len < 0.1) continue
-      const labelName = ann.label.replace(/\d+/g, '').replace(/[pxmm]/gi, '').trim() || ann.label
-      const measKeyMap: Record<string, string> = {
-        '身高': 'height', '胸围': 'bust', '腰围': 'waist', '臀围': 'hip',
-        '肩宽': 'shoulderWidth', '颈围': 'neckCircumference',
-        '通臂长': 'armSpan', '臂长': 'armLength',
-        '衣长': 'garmentLength', '裙长': 'skirtLength',
+      // Extract annotation name by stripping digits/suffix
+      const nameMatch = ann.label.match(/^(.+?)\s*\d+/)
+      const annName = nameMatch ? nameMatch[1].trim() : ann.label.trim()
+      let labelText: string
+      // Check if a derived formula exists for this annotation
+      const formula = annotationFormulas?.find((f) => f.name === annName)
+      if (formula) {
+        const computedValue = evaluateFormula(formula.formula, measurements)
+        labelText = `${annName} ${Math.round(computedValue)}mm`
+      } else {
+        const measKeyMap: Record<string, string> = {
+          '身高': 'height', '胸围': 'bust', '腰围': 'waist', '臀围': 'hip',
+          '肩宽': 'shoulderWidth', '颈围': 'neckCircumference',
+          '通臂长': 'armSpan', '臂长': 'armLength',
+          '衣长': 'garmentLength', '裙长': 'skirtLength',
+        }
+        const mappedKey = measKeyMap[annName] || annName
+        const matchingMeas = measurements[mappedKey]
+        labelText = matchingMeas !== undefined
+          ? `${annName} ${Math.round(matchingMeas)}mm`
+          : `${annName} ${Math.round(len)}mm`
       }
-      const mappedKey = measKeyMap[ann.label] || ann.label
-      const matchingMeas = measurements[mappedKey]
-      const labelText = matchingMeas !== undefined
-        ? `${ann.label} ${Math.round(matchingMeas)}mm`
-        : `${labelName} ${Math.round(len)}mm`
       const nx = -dy / len, ny = dx / len
       const tickLen = 6
       const offset = 14
