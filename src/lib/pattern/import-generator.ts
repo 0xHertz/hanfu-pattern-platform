@@ -291,6 +291,10 @@ export function generateImportSvg(
     const labelY = bbox.minY + bbox.height / 2
     svg += `<text x="${labelX}" y="${labelY}" text-anchor="middle" font-size="13" fill="#333" font-weight="bold">${part.name}</text>`
 
+    // DEBUG: show measurements used
+    const measKeys = Object.keys(measurements).slice(0, 4)
+    svg += `<text x="${labelX}" y="${labelY + 16}" text-anchor="middle" font-size="8" fill="#999">${measKeys.map(k => `${k}:${measurements[k]}`).join(' ')}</text>`
+
     // Annotation lines (dimension labels)
     const anns = part.annotations || []
     for (const ann of anns) {
