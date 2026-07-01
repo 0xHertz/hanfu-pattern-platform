@@ -164,7 +164,7 @@ export function PatternViewer({
             <Card className="overflow-hidden bg-white">
               <div
                 ref={containerRef}
-                className="relative overflow-hidden cursor-grab active:cursor-grabbing"
+                className="relative overflow-hidden cursor-grab active:cursor-grabbing flex items-center justify-center"
                 style={{ height: '600px', background: '#fafafa' }}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
@@ -173,12 +173,8 @@ export function PatternViewer({
                 onWheel={handleWheel}
               >
                 <div
-                  className="absolute origin-center"
                   style={{
                     transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                    transformOrigin: 'center center',
-                    left: '50%',
-                    top: '50%',
                   }}
                   dangerouslySetInnerHTML={{ __html: svgString }}
                 />

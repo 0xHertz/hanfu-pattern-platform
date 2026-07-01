@@ -249,8 +249,22 @@ export default function PatternPage({
             garmentName={garmentName}
             isGenerating={isGenerating}
             onRegenerate={() => {
-              localStorage.removeItem(`hanfu-measurements-${garmentId}`)
-              window.location.href = `/measure/${garmentId}`
+              setIsGenerating(true)
+              setGenerationError(null)
+              if (importData) {
+                try {
+                  const result = generateImportSvg(importData, measurements)
+                  setSvgString(result.svg)
+                } catch (err) {
+                  setGenerationError(err instanceof Error ? err.message : String(err))
+                }
+                setIsGenerating(false)
+              } else {
+                generatePattern(garmentId, measurements)
+                  .then((result) => setSvgString(result.svg))
+                  .catch((err) => setGenerationError(err instanceof Error ? err.message : String(err)))
+                  .finally(() => setIsGenerating(false))
+              }
             }}
           />
 
