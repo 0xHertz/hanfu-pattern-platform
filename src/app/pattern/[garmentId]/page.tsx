@@ -9,14 +9,11 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { PatternViewer } from '@/components/pattern/pattern-viewer'
-import type { ReferenceImage } from '@/components/pattern/pattern-viewer'
 import { AlertTriangle, ArrowLeft } from 'lucide-react'
 import { MEASUREMENT_DEFINITIONS } from '@/types/measurement'
 import { generatePattern } from '@/lib/pattern/designer'
 import { generateImportSvg } from '@/lib/pattern/import-generator'
 import type { ImportData } from '@/lib/pattern/import-generator'
-import { getPatternPages, getPatternImageUrl } from '@/data/pattern-pages'
-import { getFormulasKey } from '@/lib/pattern/formula-deriver'
 
 const CUSTOM_PREFIX = 'custom:'
 
@@ -50,8 +47,6 @@ export default function PatternPage({
   const [generationError, setGenerationError] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [importData, setImportData] = useState<ImportData | null>(null)
-  const [referenceImages, setReferenceImages] = useState<ReferenceImage[]>([])
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   useEffect(() => {
     const stored = localStorage.getItem(`hanfu-measurements-${garmentId}`)
@@ -81,19 +76,6 @@ export default function PatternPage({
     }
 
     setLoaded(true)
-  }, [garmentId])
-
-  useEffect(() => {
-    if (isCustom(garmentId)) return
-    const patternInfo = getPatternPages(garmentId)
-    if (patternInfo) {
-      const images = patternInfo.pages.map((entry) => ({
-        src: getPatternImageUrl(garmentId, entry),
-        label: entry.label,
-        slug: entry.slug,
-      }))
-      setReferenceImages(images)
-    }
   }, [garmentId])
 
   const garment = !isCustom(garmentId)
@@ -266,7 +248,6 @@ export default function PatternPage({
             svgString={svgString}
             garmentName={garmentName}
             isGenerating={isGenerating}
-            referenceImages={referenceImages}
             onRegenerate={() => {
               localStorage.removeItem(`hanfu-measurements-${garmentId}`)
               window.location.href = `/measure/${garmentId}`
@@ -302,90 +283,6 @@ export default function PatternPage({
             </CardContent>
           </Card>
 
-          {!isCustom(garmentId) && referenceImages.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">裁剪参照图</CardTitle>
-                <CardDescription>
-                  来自《现代汉服裁剪参照图集》第 {garment!.pageStart} 页起
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {referenceImages.map((img, index) => (
-                    <button
-                      key={img.slug}
-                      className="group relative overflow-hidden rounded-lg border border-border bg-white transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      onClick={() => setLightboxIndex(index)}
-                    >
-                      <div className="aspect-[3/4] overflow-hidden">
-                        <img
-                          src={img.src}
-                          alt={img.label}
-                          className="h-full w-full object-contain p-1 transition-transform group-hover:scale-105"
-                        />
-                      </div>
-                      <div className="border-t border-border px-2 py-1.5">
-                        <p className="text-xs text-muted-foreground truncate">{img.label}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
-
-      {lightboxIndex !== null && referenceImages[lightboxIndex] && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
-          onClick={() => setLightboxIndex(null)}
-        >
-          <button
-            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 text-white hover:bg-white/40 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation()
-              setLightboxIndex((i) =>
-                i !== null && i > 0 ? i - 1 : referenceImages.length - 1
-              )
-            }}
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          </button>
-          <button
-            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 text-white hover:bg-white/40 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation()
-              setLightboxIndex((i) =>
-                i !== null && i < referenceImages.length - 1 ? i + 1 : 0
-              )
-            }}
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-          </button>
-          <button
-            className="absolute right-4 top-4 rounded-full bg-white/20 p-2 text-white hover:bg-white/40 transition-colors"
-            onClick={() => setLightboxIndex(null)}
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-
-          <div
-            className="flex flex-col items-center max-h-[90vh] max-w-[90vw]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <img
-              src={referenceImages[lightboxIndex].src}
-              alt={referenceImages[lightboxIndex].label}
-              className="max-h-[85vh] max-w-[90vw] object-contain rounded-lg"
-            />
-            <p className="mt-2 text-sm text-white/80">
-              {referenceImages[lightboxIndex].label} — {garmentName}
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

@@ -28,6 +28,7 @@ export interface ImportPart {
   points: ImportPoint[]
   interiorLines?: number[][]
   foldLines?: number[][]
+  annotations?: { from: number; to: number; label: string }[]
 }
 
 export interface ImportData {
@@ -289,6 +290,29 @@ export function generateImportSvg(
     const labelX = bbox.minX + bbox.width / 2
     const labelY = bbox.minY + bbox.height / 2
     svg += `<text x="${labelX}" y="${labelY}" text-anchor="middle" font-size="13" fill="#333" font-weight="bold">${part.name}</text>`
+
+    // Annotation lines (dimension labels)
+    const anns = part.annotations || []
+    for (const ann of anns) {
+      if (ann.from >= pts.length || ann.to >= pts.length) continue
+      const pA = pts[ann.from], pB = pts[ann.to]
+      const ax = pA.cx, ay = pA.cy
+      const bx = pB.cx, by = pB.cy
+      const dx = bx - ax, dy = by - ay
+      const len = Math.hypot(dx, dy)
+      if (len < 0.1) continue
+      const nx = -dy / len, ny = dx / len
+      const tickLen = 6
+      const offset = 14
+      const mx = (ax + bx) / 2, my = (ay + by) / 2
+      const tx = mx + nx * offset, ty = my + ny * offset
+      let angle = Math.atan2(dy, dx) * (180 / Math.PI)
+      if (angle > 90 || angle < -90) angle += 180
+      svg += `<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="#C00" stroke-width="0.4"/>
+        <line x1="${ax - nx * tickLen}" y1="${ay - ny * tickLen}" x2="${ax + nx * tickLen}" y2="${ay + ny * tickLen}" stroke="#C00" stroke-width="0.4"/>
+        <line x1="${bx - nx * tickLen}" y1="${by - ny * tickLen}" x2="${bx + nx * tickLen}" y2="${by + ny * tickLen}" stroke="#C00" stroke-width="0.4"/>
+        <text x="${tx}" y="${ty}" fill="#C00" font-size="9" text-anchor="middle" dominant-baseline="middle" transform="rotate(${angle},${tx},${ty})">${ann.label}</text>`
+    }
 
     svg += `</g>`
   }
