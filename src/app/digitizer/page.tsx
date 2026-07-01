@@ -231,6 +231,7 @@ export default function DigitizerPage() {
   // Annotation mode
   const [annotationMode, setAnnotationMode] = useState(false)
   const [pendingAnnotationStart, setPendingAnnotationStart] = useState<string | null>(null)
+  const [importKey, setImportKey] = useState(0)
 
   // ─── Derived ────────────────────────────────────────────────────────────
 
@@ -584,7 +585,6 @@ export default function DigitizerPage() {
         const updated = [...prev]
         const piece = { ...updated[activePieceIdx] }
         piece.annotations = [
-          ...(piece.annotations || []),
           {
             id: `ann_${Math.random().toString(36).slice(2, 8)}`,
             fromPointId,
@@ -904,6 +904,7 @@ export default function DigitizerPage() {
         setSelectedPoint(null)
         setPendingAnnotationStart(null)
         setAnnotationMode(false)
+        setImportKey(k => k + 1)
       } catch {
         alert("导入失败：JSON 格式不正确")
       }
@@ -1230,14 +1231,29 @@ export default function DigitizerPage() {
 
           {/* Annotation list */}
           {(activePiece.annotations || []).length > 0 && (
-            <section>
+          <section key={`annlist-${activePiece.id}-${importKey}`}>
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   标注
                 </h3>
-                <Badge variant="outline" className="text-[10px]">
-                  {(activePiece.annotations || []).length}
-                </Badge>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPieces((prev) => {
+                        const updated = [...prev]
+                        updated[activePieceIdx] = { ...updated[activePieceIdx], annotations: [] }
+                        return updated
+                      })
+                    }}
+                    className="text-[10px] text-muted-foreground hover:text-destructive transition-colors"
+                  >
+                    清除全部
+                  </button>
+                  <Badge variant="outline" className="text-[10px]">
+                    {(activePiece.annotations || []).length}
+                  </Badge>
+                </div>
               </div>
               <div className="space-y-1">
                 {(activePiece.annotations || []).map((ann) => {
@@ -1468,6 +1484,7 @@ export default function DigitizerPage() {
                 />
 
                 <svg
+                  key={`${activePiece.id}-${importKey}`}
                   className="pointer-events-none absolute inset-0"
                   width={imageSize.w}
                   height={imageSize.h}
