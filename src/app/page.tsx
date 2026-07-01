@@ -30,15 +30,10 @@ export default function HomePage() {
         if (!key) continue
         if (key.startsWith("hanfu-formulas-")) {
           ids.add(key.slice("hanfu-formulas-".length))
-        } else if (key.startsWith("hanfu-override-")) {
-          const rest = key.slice("hanfu-override-".length)
-          const lastDash = rest.lastIndexOf("-")
-          const id = lastDash > 0 ? rest.slice(0, lastDash) : rest
-          if (id.length >= 2) ids.add(id)
         }
       }
       setReadyIds(ids)
-    } catch { /* localStorage not available */ }
+    } catch {}
   }, [])
 
   const availableGarments = GARMENT_CATALOG.filter(g => readyIds.has(g.id))
