@@ -1019,6 +1019,11 @@ export default function DigitizerPage() {
               上传图片
               <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
             </label>
+            <label className="mt-1 flex cursor-pointer items-center gap-1.5 rounded-lg border border-dashed border-border px-2.5 py-2 text-xs text-muted-foreground transition-colors hover:bg-muted">
+              <FileUp className="size-3.5" />
+              导入 JSON
+              <input type="file" accept=".json" onChange={handleImportJSON} className="hidden" />
+            </label>
           </section>
 
           {/* Auto-Trace & Curve Tools */}
@@ -1393,11 +1398,6 @@ export default function DigitizerPage() {
                 <Download className="mr-1 size-3.5" />
                 导出 JSON
               </Button>
-              <label className="inline-flex shrink-0 items-center justify-center rounded-lg border border-border bg-background px-2.5 text-xs font-medium h-7 gap-1 cursor-pointer hover:bg-muted transition-colors">
-                <FileUp className="size-3.5" />
-                导入 JSON
-                <input type="file" accept=".json" onChange={handleImportJSON} className="hidden" />
-              </label>
             </div>
             <div className="flex gap-1.5 mt-1.5">
               <Button size="sm" variant="outline" className="flex-1" onClick={handleCopyFormulas}>
