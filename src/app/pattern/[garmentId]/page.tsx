@@ -64,12 +64,18 @@ export default function PatternPage({
       setImportData(data)
       setLoaded(true)
     } else {
-      getOverrides(garmentId).then((overrides) => {
-        if (overrides.length > 0) {
-          setImportData(overrides[0].data)
-        }
+      const formulasJson = localStorage.getItem(`hanfu-formulas-${garmentId}`)
+      if (formulasJson) {
+        try { setImportData(JSON.parse(formulasJson)) } catch {}
         setLoaded(true)
-      })
+      } else {
+        getOverrides(garmentId).then((overrides) => {
+          if (overrides.length > 0) {
+            setImportData(overrides[0].data)
+          }
+          setLoaded(true)
+        })
+      }
     }
   }, [garmentId])
 
