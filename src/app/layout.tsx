@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { SiteHeader } from "@/components/site-header"
+import { AuthProvider } from "@/lib/auth/context"
 
 export const metadata: Metadata = {
   title: "汉服纸样 — 参数化汉服纸样生成平台",
@@ -16,8 +17,10 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className="h-full antialiased">
       <body className="flex min-h-full flex-col">
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
+        <AuthProvider>
+          <SiteHeader />
+          <main className="flex-1">{children}</main>
+        </AuthProvider>
         <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <p>汉服纸样平台 — 让传统服饰制作更简单</p>

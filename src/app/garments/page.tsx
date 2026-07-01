@@ -17,6 +17,8 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { collectSizeImports, deriveFormulas } from "@/lib/pattern/formula-deriver"
+import { saveFormulas, deleteOverride, hasFormulasSync, getOverridesSync } from "@/lib/storage"
+import { AdminGuard } from "@/components/admin-guard"
 
 interface PartInfo { name: string; pointCount: number }
 interface ImportData { garmentId: string; name: string; measurements: string[]; parts: PartInfo[]; sizeLabel?: string }
@@ -34,42 +36,19 @@ function safeParse(data: string | null): ImportData | null {
   } catch { return null }
 }
 
-interface OverrideEntry { garmentId: string; sizeLabel: string; data: ImportData | null }
-
-function getOverrides(garmentId: string): OverrideEntry[] {
-  try {
-    const result: OverrideEntry[] = []
-    const prefix = `hanfu-override-${garmentId}-`
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (!key?.startsWith(prefix)) continue
-      result.push({ garmentId, sizeLabel: key.slice(prefix.length), data: safeParse(localStorage.getItem(key)) })
-    }
-    const oldKey = `hanfu-override-${garmentId}`
-    const oldVal = localStorage.getItem(oldKey)
-    if (oldVal && !result.some(r => r.sizeLabel === "default")) {
-      const data = safeParse(oldVal)
-      result.push({ garmentId, sizeLabel: data?.sizeLabel || "default", data })
-    }
-    return result
-  } catch { return [] }
-}
-
-function hasFormulas(garmentId: string): boolean {
-  try { return localStorage.getItem(`hanfu-formulas-${garmentId}`) !== null } catch { return false }
-}
+type OverrideEntry = { garmentId: string; sizeLabel: string; data: ImportData | null }
 
 // Simple formula derivation modal component
 function FormulaModal({ garmentId, name, onClose, onSaved }: { garmentId: string; name: string; onClose: () => void; onSaved: () => void }) {
-  const overrides = getOverrides(garmentId)
+  const overrides = getOverridesSync(garmentId)
   const [saved, setSaved] = useState(false)
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (overrides.length < 2) return
     try {
       const imports = collectSizeImports(garmentId)
       const formulas = deriveFormulas(imports)
-      localStorage.setItem(`hanfu-formulas-${garmentId}`, JSON.stringify(formulas))
+      await saveFormulas(garmentId, formulas)
       setSaved(true)
       setTimeout(() => { onSaved(); onClose() }, 1000)
     } catch (e) {
@@ -125,11 +104,8 @@ export default function GarmentsPage() {
     return true
   })
 
-  const handleReset = (garmentId: string) => {
-    for (let i = localStorage.length - 1; i >= 0; i--) {
-      const key = localStorage.key(i)
-      if (key?.startsWith(`hanfu-override-${garmentId}`)) localStorage.removeItem(key)
-    }
+  const handleReset = async (garmentId: string) => {
+    await deleteOverride(garmentId)
     localStorage.removeItem(`hanfu-formulas-${garmentId}`)
     refreshData()
   }
@@ -138,6 +114,7 @@ export default function GarmentsPage() {
   const genders = [...new Set(GARMENT_CATALOG.map(g => g.gender))]
 
   return (
+    <AdminGuard>
     <div className="mx-auto max-w-6xl px-4 py-8">
       <nav className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
         <Link href="/" className="hover:text-foreground">首页</Link>
@@ -184,8 +161,8 @@ export default function GarmentsPage() {
       {/* Garment grid */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map(g => {
-          const overrides = getOverrides(g.id)
-          const hasFormulasCache = hasFormulas(g.id)
+          const overrides = getOverridesSync(g.id)
+          const hasFormulasCache = hasFormulasSync(g.id)
 
           return (
             <Card key={g.id} className="flex flex-col">
@@ -261,5 +238,6 @@ export default function GarmentsPage() {
         <FormulaModal garmentId={formulaModal} name={GARMENT_CATALOG.find(g => g.id === formulaModal)?.name ?? ""} onClose={() => setFormulaModal(null)} onSaved={refreshData} />
       )}
     </div>
+    </AdminGuard>
   )
 }

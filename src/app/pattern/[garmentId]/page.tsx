@@ -14,6 +14,7 @@ import { MEASUREMENT_DEFINITIONS } from '@/types/measurement'
 import { generatePattern } from '@/lib/pattern/designer'
 import { generateImportSvg } from '@/lib/pattern/import-generator'
 import type { ImportData } from '@/lib/pattern/import-generator'
+import { getOverrides } from '@/lib/storage'
 
 const CUSTOM_PREFIX = 'custom:'
 
@@ -61,21 +62,15 @@ export default function PatternPage({
       const importId = extractImportId(garmentId)
       const data = loadImportData(importId)
       setImportData(data)
+      setLoaded(true)
     } else {
-      const prefix = `hanfu-override-${garmentId}-`
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i)
-        if (key?.startsWith(prefix)) {
-          const overrideJson = localStorage.getItem(key)
-          if (overrideJson) {
-            try { setImportData(JSON.parse(overrideJson)) } catch {}
-            break
-          }
+      getOverrides(garmentId).then((overrides) => {
+        if (overrides.length > 0) {
+          setImportData(overrides[0].data)
         }
-      }
+        setLoaded(true)
+      })
     }
-
-    setLoaded(true)
   }, [garmentId])
 
   const garment = !isCustom(garmentId)

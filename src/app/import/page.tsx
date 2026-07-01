@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Upload, Check, AlertCircle, FileJson, Layers, Ruler, Shirt } from "lucide-react"
 import { GARMENT_CATALOG } from "@/data/garments"
+import { saveOverride } from "@/lib/storage"
+import { AdminGuard } from "@/components/admin-guard"
 
 interface ParsedImport {
   garmentId: string
@@ -125,14 +127,15 @@ function ImportPageInner() {
     reader.readAsText(file)
   }
 
-  const handleUsePattern = () => {
+  const handleUsePattern = async () => {
     if (!parsed || !garmentId) return
     const sizeLabel = parsed.sizeLabel || "default"
-    localStorage.setItem(`hanfu-override-${garmentId}-${sizeLabel}`, jsonText)
+    await saveOverride(garmentId, sizeLabel, JSON.parse(jsonText))
     router.push(`/garments`)
   }
 
   return (
+    <AdminGuard>
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <nav className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
         <Link href="/" className="hover:text-foreground transition-colors">
@@ -334,6 +337,7 @@ function ImportPageInner() {
         )}
       </div>
     </div>
+    </AdminGuard>
   )
 }
 

@@ -15,12 +15,17 @@ CREATE TABLE profiles (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Add role column for RBAC (run separately after initial schema creation)
+-- ALTER TABLE profiles ADD COLUMN role TEXT DEFAULT 'user' CHECK (role IN ('admin', 'user'));
+-- Set first admin (replace with actual user UUID):
+-- UPDATE profiles SET role = 'admin' WHERE id = '<your-user-id>';
+
 -- Trigger: auto-create profile on signup
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO profiles (id, display_name)
-  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'display_name', '汉服爱好者'));
+  INSERT INTO profiles (id, display_name, role)
+  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'display_name', '汉服爱好者'), 'user');
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -84,6 +89,48 @@ CREATE POLICY "Users manage own measurements" ON measurement_profiles
 CREATE POLICY "Users manage own patterns" ON pattern_history
   FOR ALL USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
+
+-- ============================================
+-- Override Data (imported size-specific patterns)
+-- ============================================
+CREATE TABLE IF NOT EXISTS overrides (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  garment_id TEXT NOT NULL,
+  size_label TEXT NOT NULL,
+  data JSONB NOT NULL,
+  user_id UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(garment_id, size_label)
+);
+
+-- ============================================
+-- Derived Formulas
+-- ============================================
+CREATE TABLE IF NOT EXISTS formulas (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  garment_id TEXT UNIQUE NOT NULL,
+  data JSONB NOT NULL,
+  user_id UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Override RLS
+ALTER TABLE overrides ENABLE ROW LEVEL SECURITY;
+ALTER TABLE formulas ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read overrides" ON overrides
+  FOR SELECT USING (true);
+CREATE POLICY "Admins can manage overrides" ON overrides
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  );
+
+CREATE POLICY "Anyone can read formulas" ON formulas
+  FOR SELECT USING (true);
+CREATE POLICY "Admins can manage formulas" ON formulas
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  );
 
 -- ============================================
 -- Functions

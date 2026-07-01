@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Trash2, Upload, Download, Copy, Plus, Crosshair, Wand2, FileUp } from "lucide-react"
+import { AdminGuard } from "@/components/admin-guard"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -993,6 +994,7 @@ export default function DigitizerPage() {
   // ─── JSX ───────────────────────────────────────────────────────────────
 
   return (
+    <AdminGuard>
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
       {/* ── Left Panel ────────────────────────────────────────────────── */}
       <aside className="flex w-[300px] shrink-0 flex-col overflow-y-auto border-r border-border bg-card">
@@ -1704,5 +1706,6 @@ export default function DigitizerPage() {
         </div>
       </main>
     </div>
+    </AdminGuard>
   )
 }

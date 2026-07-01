@@ -5,16 +5,26 @@ import Link from "next/link"
 import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-
-const NAV_LINKS = [
-  { href: "/garments", label: "款式管理" },
-  { href: "/measure", label: "量体" },
-  { href: "/digitizer", label: "描点工具" },
-  { href: "/profile", label: "我的" },
-]
+import { useAuth } from "@/lib/auth/context"
 
 export function SiteHeader() {
+  const { user, isAdmin, loading } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  const NAV_LINKS = !user
+    ? [{ href: "/login", label: "登录" }]
+    : isAdmin
+      ? [
+          { href: "/garments", label: "款式管理" },
+          { href: "/measure", label: "量体" },
+          { href: "/digitizer", label: "描点工具" },
+          { href: "/profile", label: "我的" },
+        ]
+      : [
+          { href: "/", label: "所有款式" },
+          { href: "/measure", label: "量体" },
+          { href: "/profile", label: "我的" },
+        ]
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-red-900/20 bg-[oklch(0.30_0.10_30)] shadow-md">
