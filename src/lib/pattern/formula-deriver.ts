@@ -164,7 +164,7 @@ function deriveCoordinateValue(
     }
   }
 
-  if (bestFit && bestFit.r2 > 0.8) {
+  if (bestFit && bestFit.r2 > 0.3) {
     return formatFormula(bestFit.measurement, bestFit.slope, bestFit.intercept)
   }
 
