@@ -585,6 +585,10 @@ export default function DigitizerPage() {
         const updated = [...prev]
         const piece = { ...updated[activePieceIdx] }
         piece.annotations = [
+          ...(piece.annotations || []).filter(
+            (a) => a.fromPointId !== fromPointId && a.fromPointId !== toPointId
+                  && a.toPointId !== fromPointId && a.toPointId !== toPointId
+          ),
           {
             id: `ann_${Math.random().toString(36).slice(2, 8)}`,
             fromPointId,
