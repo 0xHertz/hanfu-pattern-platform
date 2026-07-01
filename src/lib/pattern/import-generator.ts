@@ -301,6 +301,8 @@ export function generateImportSvg(
       const dx = bx - ax, dy = by - ay
       const len = Math.hypot(dx, dy)
       if (len < 0.1) continue
+      const labelName = ann.label.replace(/\d+/g, '').replace(/[pxmm]/gi, '').trim() || ann.label
+      const labelText = `${labelName} ${Math.round(len)}mm`
       const nx = -dy / len, ny = dx / len
       const tickLen = 6
       const offset = 14
@@ -311,7 +313,7 @@ export function generateImportSvg(
       svg += `<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="#C00" stroke-width="0.4"/>
         <line x1="${ax - nx * tickLen}" y1="${ay - ny * tickLen}" x2="${ax + nx * tickLen}" y2="${ay + ny * tickLen}" stroke="#C00" stroke-width="0.4"/>
         <line x1="${bx - nx * tickLen}" y1="${by - ny * tickLen}" x2="${bx + nx * tickLen}" y2="${by + ny * tickLen}" stroke="#C00" stroke-width="0.4"/>
-        <text x="${tx}" y="${ty}" fill="#C00" font-size="9" text-anchor="middle" dominant-baseline="middle" transform="rotate(${angle},${tx},${ty})">${ann.label}</text>`
+        <text x="${tx}" y="${ty}" fill="#C00" font-size="9" text-anchor="middle" dominant-baseline="middle" transform="rotate(${angle},${tx},${ty})">${labelText}</text>`
     }
 
     svg += `</g>`
