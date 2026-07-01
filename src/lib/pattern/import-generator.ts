@@ -291,10 +291,6 @@ export function generateImportSvg(
     const labelY = bbox.minY + bbox.height / 2
     svg += `<text x="${labelX}" y="${labelY}" text-anchor="middle" font-size="13" fill="#333" font-weight="bold">${part.name}</text>`
 
-    // DEBUG: show measurements used
-    const measKeys = Object.keys(measurements).slice(0, 4)
-    svg += `<text x="${labelX}" y="${labelY + 16}" text-anchor="middle" font-size="8" fill="#999">${measKeys.map(k => `${k}:${measurements[k]}`).join(' ')}</text>`
-
     // Annotation lines (dimension labels)
     const anns = part.annotations || []
     for (const ann of anns) {
@@ -306,7 +302,10 @@ export function generateImportSvg(
       const len = Math.hypot(dx, dy)
       if (len < 0.1) continue
       const labelName = ann.label.replace(/\d+/g, '').replace(/[pxmm]/gi, '').trim() || ann.label
-      const labelText = `${labelName} ${Math.round(len)}mm`
+      const matchingMeas = measurements[ann.label]     // if label IS a measurement key
+      const labelText = matchingMeas !== undefined
+        ? `${ann.label} ${Math.round(matchingMeas)}mm`
+        : `${labelName} ${Math.round(len)}mm`
       const nx = -dy / len, ny = dx / len
       const tickLen = 6
       const offset = 14
