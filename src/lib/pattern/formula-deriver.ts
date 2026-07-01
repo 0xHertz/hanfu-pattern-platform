@@ -138,7 +138,7 @@ function derivePartFormulas(part: ImportPart, imports: SizeImport[], partIdx: nu
     return result
   })
 
-  return { name: part.name, points: derivedPoints }
+  return { name: part.name, points: derivedPoints, annotations: part.annotations }
 }
 
 function deriveCoordinateValue(
